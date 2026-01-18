@@ -1,3 +1,7 @@
+from gestures.vertical_motion import VerticalMotion
+from hand_tracking.landmarks import get_hand_center_y
+from gestures.poke_detector import PokeDetector
+from hand_tracking.landmarks import get_index_finger_tip_3d
 from utils.smoothing import Smoother
 from hand_tracking.landmarks import get_index_finger_tip
 from gestures.stabilizer import GestureStabilizer
@@ -19,6 +23,12 @@ detector = HandDetector()
 
 cursor_cooldown = Cooldown(delay=0.02)  # ~50 FPS max
 stabilizer = GestureStabilizer(size=5)
+
+poke_detector = PokeDetector(threshold=0.05)
+click_cooldown = Cooldown(delay=0.8)
+
+volume_motion = VerticalMotion(threshold=0.02)
+volume_cooldown = Cooldown(delay=0.15)
 
 mouse = MouseController()
 volume = VolumeController()
@@ -57,12 +67,34 @@ while True:
 
                 if gesture == "CURSOR" and cursor_cooldown.ready():
                     x_norm, y_norm = get_index_finger_tip(hand)
-
                     screen_x = int(x_norm * mouse.screen_w)
                     screen_y = int(y_norm * mouse.screen_h)
-
                     smooth_x, smooth_y = smoother.smooth(screen_x, screen_y)
                     mouse.move(smooth_x, smooth_y)
+
+                elif gesture == "VOLUME":
+                    center_y = get_hand_center_y(hand)
+                    direction = volume_motion.get_direction(center_y)
+
+                    if direction == "UP" and volume_cooldown.ready():
+                        volume.increase()
+                        # draw_text(frame, "VOLUME UP")
+
+                    elif direction == "DOWN" and volume_cooldown.ready():
+                        volume.decrease()
+                        # draw_text(frame, "VOLUME DOWN")
+
+                elif gesture == "BRIGHTNESS":
+                    center_y = get_hand_center_y(hand)
+                    direction = volume_motion.get_direction(center_y)
+
+                    if direction == "UP":
+                        brightness.increase()
+                        # draw_text(frame, "BRIGHTNESS UP", color=(255, 255, 0))
+
+                    elif direction == "DOWN":
+                        brightness.decrease()
+                        # draw_text(frame, "BRIGHTNESS DOWN", color=(255, 165, 0))
 
 
                 elif gesture == "PLAY/PAUSE" and action_cooldown.ready():

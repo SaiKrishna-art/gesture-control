@@ -14,12 +14,12 @@ class VolumeController:
             return True
         return False
 
-    def increase(self, steps=2):
+    def increase(self, steps=10):
         if self._can_trigger():
             for _ in range(steps):
                 pyautogui.press("volumeup")
 
-    def decrease(self, steps=2):
+    def decrease(self, steps=10):
         if self._can_trigger():
             for _ in range(steps):
                 pyautogui.press("volumedown")
